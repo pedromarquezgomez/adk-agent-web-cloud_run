@@ -1,168 +1,216 @@
-# ADK Short Bot
+# 🤖 Plantilla ADK Agent + Cloud Run
 
-A Python-based agent that helps shorten messages using Google's Agent Development Kit (ADK) and Vertex AI.
+Una plantilla completa para crear y desplegar agentes de Google ADK (Agent Development Kit) en Cloud Run con interfaz web.
 
-## Prerequisites
+## 📋 ¿Qué incluye esta plantilla?
 
-- Python 3.12+
-- Poetry (Python package manager)
-- Google Cloud account with Vertex AI API enabled
-- Google Cloud CLI (`gcloud`) installed and authenticated
-  - Follow the [official installation guide](https://cloud.google.com/sdk/docs/install) to install gcloud
-  - After installation, run `gcloud init` and `gcloud auth login`
+- ✅ **Agente ADK** configurado y funcional
+- ✅ **Interfaz Web** integrada con FastAPI
+- ✅ **Deploy automático** en Google Cloud Run
+- ✅ **Gestión de dependencias** con Poetry
+- ✅ **Base de datos SQLite** para sesiones
+- ✅ **Estructura modular** y escalable
 
-## Installation
+## 🛠️ Tecnologías utilizadas
 
-1. Clone the repository:
-```bash
-git clone https://github.com/bhancockio/deploy-adk-agent-engine.git
-cd adk-short-bot
+- **Python 3.12+**
+- **Google ADK** (Agent Development Kit)
+- **FastAPI** para la API web
+- **SQLite** para persistencia
+- **Poetry** para gestión de dependencias
+- **Google Cloud Run** para deployment
+- **Buildpacks** para containerización automática
+
+## 📁 Estructura del proyecto
+
+```
+proyecto/
+├── main.py                    # 🚀 Entry point de la aplicación
+├── pyproject.toml            # 📦 Configuración de Poetry y proyecto
+├── poetry.lock              # 🔒 Lock file de dependencias
+├── .gitignore               # 🚫 Archivos a ignorar en Git
+├── .gcloudignore           # ☁️ Archivos a ignorar en Cloud Build
+├── README.md               # 📚 Esta documentación
+└── adk_short_bot/          # 🤖 Directorio del agente
+    ├── __init__.py         #     Configuración del paquete
+    ├── agent.py           #     Definición del agente
+    ├── prompt.py          #     Instrucciones del agente
+    └── tools/             #     🛠️ Herramientas del agente
+        ├── __init__.py    #     Exportación de tools
+        └── character_counter.py  # Herramienta de ejemplo
 ```
 
-2. Install Poetry if you haven't already:
+## 🚀 Uso de esta plantilla
+
+### 1. **Clona o usa como template:**
 ```bash
-curl -sSL https://install.python-poetry.org | python3 -
+git clone [URL-DE-TU-TEMPLATE]
+cd tu-proyecto-adk
 ```
 
-3. Install project dependencies:
+### 2. **Personaliza tu agente:**
+- Edita `adk_short_bot/agent.py` - nombre, modelo, descripción
+- Modifica `adk_short_bot/prompt.py` - instrucciones del agente
+- Agrega tools en `adk_short_bot/tools/` - funcionalidades adicionales
+
+### 3. **Instala dependencias:**
 ```bash
 poetry install
 ```
 
-4. Activate the virtual environment:
+### 4. **Prueba localmente:**
 ```bash
-source $(poetry env info --path)/bin/activate
+poetry run python main.py
+```
+Visita: http://localhost:8000
+
+### 5. **Deploya en Cloud Run:**
+```bash
+gcloud run deploy tu-agente --source . --platform managed --region us-central1 --allow-unauthenticated
 ```
 
-## Configuration
+## ⚙️ Configuración
 
-1. Create a `.env` file in the project root with the following variables:
+### Variables de entorno (.env):
 ```bash
-GOOGLE_GENAI_USE_VERTEXAI=TRUE
-GOOGLE_CLOUD_PROJECT=your-project-id
-GOOGLE_CLOUD_LOCATION=your-location  # e.g., us-central1
-GOOGLE_CLOUD_STAGING_BUCKET=gs://your-bucket-name
+# Opcional: Para configuraciones específicas
+GOOGLE_CLOUD_PROJECT=tu-proyecto-id
+GOOGLE_CLOUD_LOCATION=us-central1
+# El agente funciona sin .env, pero puedes agregar configuraciones aquí
 ```
 
-2. Set up Google Cloud authentication:
+### Configuración de Google Cloud:
 ```bash
+# 1. Instala gcloud CLI
+# 2. Autentícate
 gcloud auth login
-gcloud config set project your-project-id
+gcloud config set project tu-proyecto-id
+
+# 3. Habilita APIs (automático en primer deploy)
+gcloud services enable run.googleapis.com
+gcloud services enable cloudbuild.googleapis.com
 ```
 
-3. Enable required APIs:
+## 📦 Gestión de dependencias: Poetry vs Requirements
+
+### 🎯 **Recomendación: Solo Poetry**
+
+Esta plantilla usa **exclusivamente Poetry** porque:
+
+#### ✅ **Ventajas de Poetry:**
+- **Gestión unificada**: dependencias + metadata del proyecto
+- **Lock file automático**: `poetry.lock` garantiza builds reproducibles
+- **Resolución de dependencias**: evita conflictos automáticamente
+- **Entornos virtuales**: manejo automático
+- **Build y publish**: integrados
+
+#### ❌ **¿Por qué NO mezclar con requirements.txt?**
+- **Duplicación**: mantener dos archivos es propenso a errores
+- **Conflictos**: versiones diferentes entre archivos
+- **Complejidad**: dos fuentes de verdad
+- **Cloud Run + Buildpacks**: detecta y usa Poetry automáticamente
+
+#### 🏗️ **Para deployment en Cloud Run:**
+1. **Buildpacks detecta Poetry** automáticamente
+2. **Instala dependencias** desde `pyproject.toml`
+3. **Usa poetry.lock** para versiones exactas
+4. **No necesita** Dockerfile ni requirements.txt
+
+### 📋 **Comandos útiles de Poetry:**
+
 ```bash
-gcloud services enable aiplatform.googleapis.com
+# Agregar dependencia
+poetry add nombre-paquete
+
+# Agregar dependencia de desarrollo
+poetry add --group dev nombre-paquete
+
+# Actualizar dependencias
+poetry update
+
+# Instalar en producción (solo main dependencies)
+poetry install --only=main
+
+# Mostrar dependencias
+poetry show --tree
 ```
 
-## Usage
+## 🔧 Personalización del agente
 
-### Local Testing
+### 1. **Cambia el nombre y comportamiento:**
+```python
+# adk_short_bot/agent.py
+root_agent = Agent(
+    name="tu_agente",  # 👈 Cambia aquí
+    model="gemini-2.0-flash",
+    description="Descripción de tu agente",  # 👈 Y aquí
+    instruction=ROOT_AGENT_INSTRUCTION,
+    tools=[tus_tools],  # 👈 Agrega tus herramientas
+)
+```
 
-1. Create a new session:
+### 2. **Modifica las instrucciones:**
+```python
+# adk_short_bot/prompt.py
+ROOT_AGENT_INSTRUCTION = """
+Tus instrucciones personalizadas aquí...
+"""
+```
+
+### 3. **Agrega nuevas herramientas:**
+```python
+# adk_short_bot/tools/nueva_tool.py
+def nueva_funcionalidad(parametro: str) -> str:
+    """
+    Descripción de tu nueva herramienta
+    """
+    return f"Resultado: {parametro}"
+```
+
+## 🚀 Deployment
+
+### Proceso automático con Buildpacks:
+1. **Detecta** Python + Poetry automáticamente
+2. **Instala** dependencias desde pyproject.toml
+3. **Ejecuta** main.py como entry point
+4. **Configura** puerto dinámico automáticamente
+
+### URL de tu aplicación:
+Después del deploy: `https://tu-servicio-[ID].us-central1.run.app`
+
+## 🔍 Debugging
+
+### Logs en tiempo real:
 ```bash
-poetry run deploy-local --create_session
+gcloud run services logs tail tu-servicio --region=us-central1
 ```
 
-2. List all sessions:
+### Prueba local:
 ```bash
-poetry run deploy-local --list_sessions
+poetry run python main.py
+# Abre: http://localhost:8000
+# API docs: http://localhost:8000/docs
 ```
 
-3. Get details of a specific session:
-```bash
-poetry run deploy-local --get_session --session_id=your-session-id
-```
+## 📚 Recursos adicionales
 
-4. Send a message to shorten:
-```bash
-poetry run deploy-local --send --session_id=your-session-id --message="Shorten this message: Hello, how are you doing today?"
-```
+- **[Google ADK Documentation](https://cloud.google.com/agent-development-kit)**
+- **[Poetry Documentation](https://python-poetry.org/docs/)**
+- **[Cloud Run Documentation](https://cloud.google.com/run/docs)**
+- **[FastAPI Documentation](https://fastapi.tiangolo.com/)**
 
-### Remote Deployment
+## 🤝 Contribuir
 
-1. Deploy the agent:
-```bash
-poetry run deploy-remote --create
-```
+1. Fork el proyecto
+2. Crea una rama para tu feature
+3. Commit tus cambios
+4. Push a la rama
+5. Abre un Pull Request
 
-2. Create a session:
-```bash
-poetry run deploy-remote --create_session --resource_id=your-resource-id
-```
+## 📄 Licencia
 
-3. List sessions:
-```bash
-poetry run deploy-remote --list_sessions --resource_id=your-resource-id
-```
+[Tu licencia preferida]
 
-4. Send a message:
-```bash
-poetry run deploy-remote --send --resource_id=your-resource-id --session_id=your-session-id --message="Hello, how are you doing today? So far, I've made breakfast today, walkted dogs, and went to work."
-```
+---
 
-5. Clean up (delete deployment):
-```bash
-poetry run deploy-remote --delete --resource_id=your-resource-id
-```
-
-## Project Structure
-
-```
-adk-short-bot/
-├── adk_short_bot/          # Main package directory
-│   ├── __init__.py
-│   ├── agent.py           # Agent implementation
-│   └── prompt.py          # Prompt templates
-├── deployment/            # Deployment scripts
-│   ├── local.py          # Local testing script
-│   └── remote.py         # Remote deployment script
-├── .env                  # Environment variables
-├── poetry.lock          # Poetry lock file
-└── pyproject.toml       # Project configuration
-```
-
-## Development
-
-To add new features or modify existing ones:
-
-1. Make your changes in the relevant files
-2. Test locally using the local deployment script
-3. Deploy to remote using the remote deployment script
-4. Update documentation as needed
-
-## Troubleshooting
-
-1. If you encounter authentication issues:
-   - Ensure you're logged in with `gcloud auth login`
-   - Verify your project ID and location in `.env`
-   - Check that the Vertex AI API is enabled
-
-2. If deployment fails:
-   - Check the staging bucket exists and is accessible
-   - Verify all required environment variables are set
-   - Ensure you have the necessary permissions in your Google Cloud project
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## License
-
-[Your chosen license]
-# (Asegúrate de haber configurado las variables de entorno antes)
-
-export GOOGLE_CLOUD_PROJECT="sumy-464008"
-export GOOGLE_CLOUD_LOCATION="us-central1"
-export AGENT_PATH="./adk_short_bot"
-export SERVICE_NAME="short-bot-service"
-
-adk deploy cloud_run \
-  --project=$GOOGLE_CLOUD_PROJECT \
-  --region=$GOOGLE_CLOUD_LOCATION \
-  --service_name=$SERVICE_NAME \
-  --with_ui \
-  $AGENT_PATH
+**💡 Tip**: Esta plantilla está optimizada para simplicidad y mejores prácticas. ¡Úsala como base para tus proyectos ADK!
