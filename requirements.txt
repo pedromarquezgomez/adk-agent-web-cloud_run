@@ -1,4 +1,5 @@
 absl-py==2.2.2
+-e git+https://github.com/pedromarquezgomez/adk-agent-web-cloud_run.git@4ecf3b91a3514d433e7ab7c6bf6c70877fe81d06#egg=adk_short_bot
 annotated-types==0.7.0
 anyio==4.9.0
 Authlib==1.5.2

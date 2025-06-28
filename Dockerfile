@@ -8,8 +8,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia todo el código de tu proyecto al contenedor
 COPY . .
 
-# Expone el puerto 8080 (Cloud Run mapea automáticamente)
+# Expone el puerto que Cloud Run usará
 EXPOSE 8080
 
 # El comando para arrancar la aplicación
-CMD ["python", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

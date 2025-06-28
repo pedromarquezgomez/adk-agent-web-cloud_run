@@ -2,23 +2,23 @@ import os
 import uvicorn
 from google.adk.cli.fast_api import get_fast_api_app
 
-# Get the directory where main.py is located
-AGENT_DIR = os.path.dirname(os.path.abspath(__file__))
-# Session DB URL
+# Obtiene el directorio donde está main.py
+AGENTS_DIR = os.path.dirname(os.path.abspath(__file__))
+# ADK necesita una base de datos para las sesiones, SQLite es perfecto para esto
 SESSION_DB_URL = "sqlite:///./sessions.db"
-# CORS origins
+# Permite todas las conexiones
 ALLOWED_ORIGINS = ["*"]
-# Enable web UI
+# Activa la interfaz web
 SERVE_WEB_INTERFACE = True
 
-# Create the FastAPI app with correct parameters
+# Llama a la función del ADK para obtener la aplicación FastAPI
 app = get_fast_api_app(
-    agent_dir=AGENT_DIR,
-    session_db_url=SESSION_DB_URL,
+    agents_dir=AGENTS_DIR,
+    session_service_uri=SESSION_DB_URL,
     allow_origins=ALLOWED_ORIGINS,
     web=SERVE_WEB_INTERFACE,
 )
 
 if __name__ == "__main__":
-    # Use the PORT that Cloud Run wants (8000 by default)
+    # Inicia el servidor en el puerto correcto y escuchando en 0.0.0.0
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
