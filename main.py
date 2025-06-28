@@ -20,5 +20,15 @@ app = get_fast_api_app(
 )
 
 if __name__ == "__main__":
-    # Inicia el servidor en el puerto correcto y escuchando en 0.0.0.0
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    # Configuración optimizada para Cloud Run
+    port = int(os.environ.get("PORT", 8000))
+    print(f"🚀 Iniciando servidor en puerto {port}")
+    
+    # Inicia el servidor con configuración optimizada para Cloud Run
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=port,
+        access_log=False,  # Reduce overhead en producción
+        timeout_keep_alive=120,  # Mantiene conexiones vivas más tiempo
+    )
