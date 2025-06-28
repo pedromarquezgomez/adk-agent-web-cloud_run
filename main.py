@@ -1,100 +1,78 @@
 import os
 import uvicorn
-import asyncio
 import threading
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
-
-# Configuración básica
-AGENTS_DIR = os.path.dirname(os.path.abspath(__file__))
-SESSION_DB_URL = "sqlite:///./sessions.db"
-ALLOWED_ORIGINS = ["*"]
-SERVE_WEB_INTERFACE = True
+import time
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, JSONResponse
 
 # Estado global para ADK
-adk_app = None
 adk_ready = False
 adk_error = None
+adk_loading = True
 
-# Aplicación FastAPI que inicia inmediatamente
-app = FastAPI(title="ADK Agent Proxy")
+# Aplicación FastAPI mínima que inicia inmediatamente
+app = FastAPI(title="ADK Agent Loader", description="Loading ADK Agent...")
 
 @app.get("/health")
-async def health_check():
-    """Health check endpoint para Cloud Run"""
-    return {"status": "healthy", "service": "adk-agent", "adk_ready": adk_ready}
+def health_check():
+    """Health check endpoint para Cloud Run - debe responder inmediatamente"""
+    return JSONResponse({"status": "healthy", "service": "adk-loader"})
 
 @app.get("/")
-async def root():
-    """Status endpoint"""
-    if adk_ready and adk_app:
-        return {"message": "ADK Agent is ready", "status": "ready"}
-    elif adk_error:
-        return {"message": f"ADK Agent failed to load: {adk_error}", "status": "error"}
-    else:
-        return {"message": "ADK Agent is loading...", "status": "loading"}
-
-@app.get("/status")
-async def status():
-    """Endpoint de estado detallado"""
-    return {
+def root():
+    """Root endpoint que siempre responde"""
+    return JSONResponse({
+        "message": "ADK Agent Loader", 
+        "status": "running",
         "adk_ready": adk_ready,
-        "adk_error": str(adk_error) if adk_error else None,
-        "message": "ADK Agent Status"
-    }
+        "loading": adk_loading
+    })
 
-@app.get("/ui", response_class=HTMLResponse)
-async def ui_redirect():
-    """Redirección a la UI de ADK cuando esté lista"""
-    if adk_ready and adk_app:
-        return """
-        <html>
-            <head><meta http-equiv="refresh" content="0; url=/web"></head>
-            <body>Redirecting to ADK UI...</body>
-        </html>
-        """
-    else:
-        return """
-        <html>
-            <body>
-                <h1>ADK Agent Loading...</h1>
-                <p>Please wait while the ADK agent initializes.</p>
-                <script>setTimeout(() => location.reload(), 3000);</script>
-            </body>
-        </html>
-        """
+@app.get("/ping")
+def ping():
+    """Ping endpoint simple"""
+    return JSONResponse({"ping": "pong", "timestamp": time.time()})
 
-def initialize_adk():
-    """Inicializa ADK en background thread"""
-    global adk_app, adk_ready, adk_error
+def load_adk_background():
+    """Carga ADK en background de forma muy simple"""
+    global adk_ready, adk_error, adk_loading
     
     try:
-        print("🚀 Iniciando configuración de ADK en background...")
+        time.sleep(2)  # Simular que está cargando
+        print("🚀 Intentando cargar ADK...")
+        
+        # Configuración
+        AGENTS_DIR = os.path.dirname(os.path.abspath(__file__))
+        SESSION_DB_URL = "sqlite:///./sessions.db"
+        ALLOWED_ORIGINS = ["*"]
+        
+        # Importar solo cuando sea necesario
         from google.adk.cli.fast_api import get_fast_api_app
         
-        # Configurar ADK
-        temp_app = get_fast_api_app(
+        # Crear app ADK
+        adk_app = get_fast_api_app(
             agents_dir=AGENTS_DIR,
             session_service_uri=SESSION_DB_URL,
             allow_origins=ALLOWED_ORIGINS,
-            web=SERVE_WEB_INTERFACE,
+            web=True,
         )
         
-        # Mount ADK app como sub-aplicación
-        app.mount("/adk", temp_app)
-        app.mount("/web", temp_app)  # Para la UI web
+        # Montar como sub-aplicación
+        app.mount("/adk", adk_app)
         
-        adk_app = temp_app
         adk_ready = True
-        print("✅ ADK configurado exitosamente y montado")
+        adk_loading = False
+        print("✅ ADK cargado exitosamente")
         
     except Exception as e:
-        adk_error = e
-        print(f"❌ Error configurando ADK: {e}")
+        adk_error = str(e)
+        adk_loading = False
+        print(f"❌ Error cargando ADK: {e}")
 
-# Inicializar ADK en background thread
-print("🔧 Iniciando aplicación FastAPI...")
-threading.Thread(target=initialize_adk, daemon=True).start()
+# Iniciar carga de ADK en background
+print("🔧 FastAPI iniciando...")
+threading.Thread(target=load_adk_background, daemon=True).start()
+print("✅ FastAPI listo - ADK cargando en background")
 
 if __name__ == "__main__":
     # Configuración optimizada para Cloud Run
