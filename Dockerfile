@@ -2,17 +2,9 @@
 FROM python:3.12-slim
 WORKDIR /app
 
-# Instala Poetry
-RUN pip install poetry
-
-# Configura Poetry para no crear entorno virtual (ya estamos en contenedor)
-RUN poetry config virtualenvs.create false
-
-# Copia archivos de configuración de Poetry
-COPY pyproject.toml poetry.lock ./
-
-# Instala dependencias
-RUN poetry install --only=main --no-dev
+# Copia e instala dependencias mínimas
+COPY requirements-minimal.txt .
+RUN pip install --no-cache-dir -r requirements-minimal.txt
 
 # Copia el código de la aplicación
 COPY . .
