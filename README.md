@@ -153,3 +153,16 @@ To add new features or modify existing ones:
 ## License
 
 [Your chosen license]
+# (Asegúrate de haber configurado las variables de entorno antes)
+
+export GOOGLE_CLOUD_PROJECT="sumy-464008"
+export GOOGLE_CLOUD_LOCATION="us-central1"
+export AGENT_PATH="./adk_short_bot"
+export SERVICE_NAME="short-bot-service"
+
+adk deploy cloud_run \
+  --project=$GOOGLE_CLOUD_PROJECT \
+  --region=$GOOGLE_CLOUD_LOCATION \
+  --service_name=$SERVICE_NAME \
+  --with_ui \
+  $AGENT_PATH
